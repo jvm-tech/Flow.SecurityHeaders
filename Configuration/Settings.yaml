@@ -1,0 +1,47 @@
+Neos:
+  Flow:
+    http:
+      middlewares:
+        'JvMTECH.Flow.SecurityHeaders':
+          position: 'after routing'
+          middleware: 'JvMTECH\Flow\SecurityHeaders\Middleware\SecurityHeadersMiddleware'
+
+JvMTECH:
+  Flow:
+    SecurityHeaders:
+      contexts:
+        backend:
+          uriPrefixes: ['/neos/']
+        backendOrDevelopment:
+          uriPrefixes: ['/neos/']
+          flowContexts: ['Development']
+          operator: 'or'
+        development:
+          flowContexts: ['Development']
+      headers:
+        Content-Security-Policy:
+          default-src: "'self'"
+          script-src:
+            default: "'self'"
+            backend: "'unsafe-inline'"
+            backendOrDevelopment: "'unsafe-inline'"
+            development: "'unsafe-inline'"
+          connect-src: "'self'"
+          img-src:
+            default: "'self' data:"
+          media-src: "'self'"
+          style-src:
+            default: "'self' 'unsafe-inline'"
+          style-src-attr: "'unsafe-inline'"
+          font-src: "'self'"
+          base-uri: "'self'"
+          form-action: "'self'"
+          manifest-src: "'self'"
+          script-src-elem:
+            default: "'self'"
+            backendOrDevelopment: "'unsafe-inline'"
+            development: "'unsafe-inline'"
+          frame-src: "'self'"
+          frame-ancestors: "'self'"
+        X-Frame-Options: "SAMEORIGIN"
+        X-Content-Type-Options: "nosniff"

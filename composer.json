@@ -1,0 +1,26 @@
+{
+    "name": "jvmtech/flow-security-headers",
+    "description": "PSR-15 middleware for Neos Flow that adds configurable security headers (CSP, X-Frame-Options, X-Content-Type-Options, etc.) to every HTTP response.",
+    "type": "neos-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jung von Matt TECH",
+            "homepage": "https://jvmtech.ch",
+            "role": "Company"
+        }
+    ],
+    "require": {
+        "neos/flow": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "JvMTECH\\Flow\\SecurityHeaders\\": "Classes/"
+        }
+    },
+    "extra": {
+        "neos": {
+            "package-key": "JvMTECH.Flow.SecurityHeaders"
+        }
+    }
+}
