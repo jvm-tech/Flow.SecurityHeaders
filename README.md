@@ -27,18 +27,16 @@ The middleware runs `after routing`, meaning any IP allowlist middleware at the 
 
 ## Contexts
 
-Contexts are named conditions evaluated against each request. When a context is active, its header additions are appended to the `default` value for that directive.
+Contexts are named conditions evaluated against each request. For each directive, the **highest-position active context** that defines a value wins exclusively — its value is used as-is, with no concatenation. `default` (position 0) is the fallback when no higher-priority context defines a value for that directive. If the winning context doesn't define a value for a given directive, the next highest-position active context is tried.
 
 ### Built-in contexts
 
-| Context | Active when |
-|---|---|
-| `default` | Always (implicit) |
-| `backend` | URI starts with `/neos/` |
-| `monocle` | URI starts with `/monocle/` |
-| `development` | `FLOW_CONTEXT` is `Development` |
-| `backendOrDevelopment` | Backend **or** development |
-| `monocleAndDevelopment` | Monocle **and** development |
+| Context | Position | Active when |
+|---|---|---|
+| `default` | 0 (implicit) | Always |
+| `backendOrDevelopment` | 100 | URI starts with `/neos/` **or** `FLOW_CONTEXT` is `Development` |
+| `backend` | 200 | URI starts with `/neos/` |
+| `development` | 200 | `FLOW_CONTEXT` is `Development` |
 
 ### Defining custom contexts
 
@@ -46,26 +44,32 @@ Add to your site package's `Configuration/Settings.yaml`:
 
 ```yaml
 JvMTECH:
-  SecurityHeaders:
-    contexts:
-      api:
-        uriPrefixes: ['/api/', '/graphql/']
-      staging:
-        flowContexts: ['Production/Staging']
-      apiInDevelopment:
-        uriPrefixes: ['/api/']
-        flowContexts: ['Development']
-        # operator: 'and' is the default
-      backendOrStaging:
-        uriPrefixes: ['/neos/']
-        flowContexts: ['Production/Staging']
-        operator: 'or'
+  Flow:
+    SecurityHeaders:
+      contexts:
+        api:
+          position: 300
+          uriPrefixes: ['/api/', '/graphql/']
+        staging:
+          position: 150
+          flowContexts: ['Production/Staging']
+        apiInDevelopment:
+          position: 400
+          uriPrefixes: ['/api/']
+          flowContexts: ['Development']
+          # operator: 'and' is the default
+        backendOrStaging:
+          position: 100
+          uriPrefixes: ['/neos/']
+          flowContexts: ['Production/Staging']
+          operator: 'or'
 ```
 
 Each context supports:
 
 | Key | Description |
 |---|---|
+| `position` | Integer priority; higher position wins when multiple contexts match (default: `100`) |
 | `uriPrefixes` | List of URI prefixes — active if the request URI starts with **any** of them |
 | `flowContexts` | List of Flow contexts — active if `FLOW_CONTEXT` matches **any** of them (exact match or subcontext, e.g. `Production` matches `Production/Staging`) |
 | `operator` | `and` (default) — both conditions must match; `or` — either condition suffices |

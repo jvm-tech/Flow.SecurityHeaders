@@ -21,8 +21,9 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
      * context-specific header additions are active.
      *
      * Each context entry supports:
+     *   position:     integer priority; higher wins when multiple contexts match (default: 100)
      *   uriPrefixes:  list of URI prefixes — active if the request URI starts with any of them
-     *   flowContexts: list of Flow contexts — active if FLOW_CONTEXT matches any of them
+     *   flowContexts: list of Flow contexts — active if FLOW_CONTEXT matches any of them (subcontexts included)
      *   operator:     'and' (default) or 'or' — how uriPrefixes and flowContexts are combined
      *
      * @Flow\InjectConfiguration(path="contexts")
@@ -50,18 +51,26 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         return $response;
     }
 
+    /**
+     * Returns active context names sorted ascending by position (lowest first, highest last).
+     * 'default' is always included at position 0 and acts as the fallback when no
+     * higher-priority context defines a value for a given directive.
+     */
     private function resolveActiveContexts(ServerRequestInterface $request): array
     {
         $uri = $request->getServerParams()['REQUEST_URI'] ?? '';
         $flowContext = $request->getServerParams()['FLOW_CONTEXT'] ?? '';
 
-        $active = ['default'];
+        $active = ['default' => 0];
         foreach ($this->contexts as $name => $conditions) {
             if ($this->contextMatches($conditions, $uri, $flowContext)) {
-                $active[] = $name;
+                $active[$name] = (int)($conditions['position'] ?? 100);
             }
         }
-        return $active;
+
+        asort($active);
+
+        return array_keys($active);
     }
 
     private function contextMatches(array $conditions, string $uri, string $flowContext): bool
@@ -131,18 +140,22 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         return implode(' ', $parts);
     }
 
+    /**
+     * Resolves a context-keyed value map to a string.
+     *
+     * Active contexts are sorted ascending by position. The highest-position active context
+     * that defines a value for this directive wins exclusively — lower-priority contexts
+     * (including 'default') are not concatenated. 'default' acts as a position-0 fallback
+     * when no higher-priority context defines a value.
+     */
     private function resolveContextualValue(array $contextValues, ServerRequestInterface $request, array $activeContexts): string
     {
-        $parts = [];
-        foreach ($activeContexts as $context) {
+        foreach (array_reverse($activeContexts) as $context) {
             if (isset($contextValues[$context])) {
-                $value = $this->replaceVariables($request, $contextValues[$context]);
-                if (!in_array($value, $parts, true)) {
-                    $parts[] = $value;
-                }
+                return $this->replaceVariables($request, $contextValues[$context]);
             }
         }
-        return implode(' ', $parts);
+        return '';
     }
 
     private function replaceVariables(ServerRequestInterface $request, string $value): string

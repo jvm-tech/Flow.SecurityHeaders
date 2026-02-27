@@ -10,13 +10,16 @@ JvMTECH:
   Flow:
     SecurityHeaders:
       contexts:
-        backend:
-          uriPrefixes: ['/neos/']
         backendOrDevelopment:
+          position: 100
           uriPrefixes: ['/neos/']
           flowContexts: ['Development']
           operator: 'or'
+        backend:
+          position: 200
+          uriPrefixes: ['/neos/']
         development:
+          position: 200
           flowContexts: ['Development']
       headers:
         Content-Security-Policy:
@@ -27,11 +30,9 @@ JvMTECH:
             backendOrDevelopment: "'unsafe-inline'"
             development: "'unsafe-inline'"
           connect-src: "'self'"
-          img-src:
-            default: "'self' data:"
+          img-src: "'self' data:"
           media-src: "'self'"
-          style-src:
-            default: "'self' 'unsafe-inline'"
+          style-src: "'self' 'unsafe-inline'"
           style-src-attr: "'unsafe-inline'"
           font-src: "'self'"
           base-uri: "'self'"
